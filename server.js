@@ -6,9 +6,10 @@ const { pool, testConnection } = require('./config/database');
 
 const booksRouter = require('./routes/books');
 const authorsRouter = require('./routes/authors');
-const reviewRoutes = require('./routes/reviews');
-const progressRoutes = require('./routes/progress');
-const quotesRoutes = require('./routes/quotes');
+const progressRouter = require('./routes/progress');
+const quotesRouter = require('./routes/quotes');
+const reviewsRouter = require('./routes/reviews');
+const ratingsRouter = require('./routes/ratings');
 
 const app = express();
 
@@ -45,20 +46,17 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-app.use('/api/books', booksRouter);
-app.use('/api/authors', authorsRouter);
-app.use('/api/ratings', require('./routes/ratings'));
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/progress', require('./routes/progress'));
-app.use('/api/quotes', quotesRoutes);
+app.use('/books', booksRouter);
+app.use('/authors', authorsRouter);
+app.use('/progress', progressRouter);
+app.use('/quotes', quotesRouter);
+app.use('/reviews', reviewsRouter);
+app.use('/ratings', ratingsRouter);
 
+// fallback
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Маршрут не найден'
-  });
+  res.status(404).json({ success: false, error: 'Маршрут не найден' });
 });
 
-
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
