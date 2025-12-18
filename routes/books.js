@@ -6,17 +6,13 @@ const pool = require('../config/database');
 router.get('/search/:query', async (req, res) => {
   try {
     const q = `%${req.params.query}%`;
-
     const { rows } = await pool.query(
-      `
-      SELECT book_id AS id, title, publication_year, description
-      FROM books
-      WHERE title ILIKE $1 OR description ILIKE $1
-      LIMIT 10
-      `,
+      `SELECT book_id AS id, title, publication_year, description
+       FROM books
+       WHERE title ILIKE $1 OR description ILIKE $1
+       LIMIT 10`,
       [q]
     );
-
     res.json({ success: true, data: rows, count: rows.length });
   } catch (e) {
     console.error(e);
@@ -32,25 +28,20 @@ router.get('/', async (req, res) => {
     const offset = (page - 1) * limit;
 
     const { rows } = await pool.query(
-      `
-      SELECT 
-        b.book_id AS id,
-        b.title,
-        b.isbn,
-        b.publication_year,
-        b.description,
-        b.cover_url,
-        COALESCE(
-          STRING_AGG(a.first_name || ' ' || a.last_name, ','),
-          ''
-        ) AS authors
-      FROM books b
-      LEFT JOIN book_authors ba ON b.book_id = ba.book_id
-      LEFT JOIN authors a ON ba.author_id = a.author_id
-      GROUP BY b.book_id
-      ORDER BY b.title
-      LIMIT $1 OFFSET $2
-      `,
+      `SELECT 
+         b.book_id AS id,
+         b.title,
+         b.isbn,
+         b.publication_year,
+         b.description,
+         b.cover_url,
+         COALESCE(STRING_AGG(a.first_name || ' ' || a.last_name, ','), '') AS authors
+       FROM books b
+       LEFT JOIN book_authors ba ON b.book_id = ba.book_id
+       LEFT JOIN authors a ON ba.author_id = a.author_id
+       GROUP BY b.book_id
+       ORDER BY b.title
+       LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
 
@@ -60,10 +51,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      data: rows.map(b => ({
-        ...b,
-        authors: b.authors ? b.authors.split(',') : []
-      })),
+      data: rows.map(b => ({ ...b, authors: b.authors ? b.authors.split(',') : [] })),
       pagination: {
         total: countRows[0].total,
         page,
@@ -81,35 +69,24 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `
-      SELECT 
-        b.book_id AS id,
-        b.title,
-        b.isbn,
-        b.publication_year,
-        b.description,
-        b.cover_url,
-        STRING_AGG(a.first_name || ' ' || a.last_name, ',') AS authors
-      FROM books b
-      LEFT JOIN book_authors ba ON b.book_id = ba.book_id
-      LEFT JOIN authors a ON ba.author_id = a.author_id
-      WHERE b.book_id = $1
-      GROUP BY b.book_id
-      `,
+      `SELECT 
+         b.book_id AS id,
+         b.title,
+         b.isbn,
+         b.publication_year,
+         b.description,
+         b.cover_url,
+         STRING_AGG(a.first_name || ' ' || a.last_name, ',') AS authors
+       FROM books b
+       LEFT JOIN book_authors ba ON b.book_id = ba.book_id
+       LEFT JOIN authors a ON ba.author_id = a.author_id
+       WHERE b.book_id = $1
+       GROUP BY b.book_id`,
       [req.params.id]
     );
+    if (!rows.length) return res.status(404).json({ success: false });
 
-    if (!rows.length) {
-      return res.status(404).json({ success: false });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        ...rows[0],
-        authors: rows[0].authors ? rows[0].authors.split(',') : []
-      }
-    });
+    res.json({ success: true, data: { ...rows[0], authors: rows[0].authors ? rows[0].authors.split(',') : [] } });
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false });
