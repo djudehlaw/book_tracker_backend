@@ -1,18 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
+const pool = require('../config/database');
 
 // получить прогресс
 router.get('/book/:bookId', async (req, res) => {
   try {
-    const [[row]] = await pool.query(
-      'SELECT status, pages_read, total_pages FROM book_progress WHERE book_id = ?',
+    const { rows } = await pool.query(
+      `
+      SELECT status, pages_read, total_pages
+      FROM book_progress
+      WHERE book_id = $1
+      `,
       [req.params.bookId]
     );
 
-    res.json({ success: true, data: row || null });
-  } catch (err) {
-    console.error(err);
+    res.json({ success: true, data: rows[0] || null });
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ success: false });
   }
 });
@@ -23,17 +27,17 @@ router.post('/book/:bookId', async (req, res) => {
     const { status, pages_read, total_pages } = req.body;
     const bookId = req.params.bookId;
 
-    const [[exists]] = await pool.query(
-      'SELECT 1 FROM book_progress WHERE book_id = ?',
+    const { rowCount } = await pool.query(
+      'SELECT 1 FROM book_progress WHERE book_id = $1',
       [bookId]
     );
 
-    if (exists) {
+    if (rowCount) {
       await pool.query(
         `
         UPDATE book_progress
-        SET status = ?, pages_read = ?, total_pages = ?
-        WHERE book_id = ?
+        SET status = $1, pages_read = $2, total_pages = $3
+        WHERE book_id = $4
         `,
         [status, pages_read, total_pages, bookId]
       );
@@ -41,15 +45,15 @@ router.post('/book/:bookId', async (req, res) => {
       await pool.query(
         `
         INSERT INTO book_progress (book_id, status, pages_read, total_pages)
-        VALUES (?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4)
         `,
         [bookId, status, pages_read, total_pages]
       );
     }
 
     res.json({ success: true });
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ success: false });
   }
 });

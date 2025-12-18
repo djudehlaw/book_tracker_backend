@@ -1,17 +1,16 @@
-const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Создаем пул соединений с базой данных
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'bookuser',
-  password: process.env.DB_PASSWORD || 'password123',
-  database: process.env.DB_NAME || 'book_tracker',
-  charset: 'utf8mb4',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+module.exports = pool;
+
 
 // Тестируем подключение
 async function testConnection() {

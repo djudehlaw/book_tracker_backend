@@ -5,18 +5,18 @@ const { pool } = require('../config/database');
 // ⭐ Получить все рейтинги
 router.get('/', async (req, res) => {
   try {
-    const [ratings] = await pool.query(
-      `SELECT 
+    const result = await pool.query(`
+      SELECT 
         rating_id,
         book_id,
         score
       FROM ratings
-      ORDER BY rating_id DESC`
-    );
+      ORDER BY rating_id DESC
+    `);
 
     res.json({
       success: true,
-      data: ratings
+      data: result.rows
     });
   } catch (error) {
     console.error(error);
@@ -27,26 +27,28 @@ router.get('/', async (req, res) => {
 // ⭐ Получить рейтинги конкретной книги
 router.get('/book/:bookId', async (req, res) => {
   try {
-    const [ratings] = await pool.query(
-      `SELECT 
+    const ratingsResult = await pool.query(
+      `
+      SELECT 
         rating_id,
         book_id,
         score
       FROM ratings
-      WHERE book_id = ?
-      ORDER BY rating_id DESC`,
+      WHERE book_id = $1
+      ORDER BY rating_id DESC
+      `,
       [req.params.bookId]
     );
 
-    const [[avg]] = await pool.query(
-      'SELECT ROUND(AVG(score), 1) as average FROM ratings WHERE book_id = ?',
+    const avgResult = await pool.query(
+      'SELECT ROUND(AVG(score), 1) AS average FROM ratings WHERE book_id = $1',
       [req.params.bookId]
     );
 
     res.json({
       success: true,
-      average: avg.average,
-      data: ratings
+      average: avgResult.rows[0].average,
+      data: ratingsResult.rows
     });
   } catch (error) {
     console.error(error);
@@ -63,11 +65,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, error: 'book_id и score обязательны' });
     }
 
-    const numericScore = Number(score);
-
     await pool.query(
-      'INSERT INTO ratings (book_id, score) VALUES (?, ?)',
-      [book_id, numericScore]
+      'INSERT INTO ratings (book_id, score) VALUES ($1, $2)',
+      [book_id, Number(score)]
     );
 
     res.json({ success: true });
@@ -76,6 +76,5 @@ router.post('/', async (req, res) => {
     res.status(500).json({ success: false, error: 'Ошибка сервера' });
   }
 });
-
 
 module.exports = router;
