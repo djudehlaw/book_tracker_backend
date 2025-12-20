@@ -29,19 +29,5 @@ app.use("/api/quotes", quotesRouter);
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/ratings", ratingsRouter);
 
-// --- отдаём фронт ---
-app.use(express.static(path.join(__dirname, "frontend/dist")));
-
-// fallback для React Router
-app.get("/api/authors", (req, res) => {
-  // возвращаем JSON с авторами
-});
-
-app.get("/api/authors/:id", (req, res) => {
-  // возвращаем JSON одного автора
-});
-
-// catch-all для фронта — только после API
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
