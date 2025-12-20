@@ -1,5 +1,6 @@
 const express = require('express');
 import path from "path";
+import { fileURLToPath } from "url";
 const cors = require('cors');
 require('dotenv').config();
 
@@ -13,6 +14,9 @@ const reviewsRouter = require('./routes/reviews');
 const ratingsRouter = require('./routes/ratings');
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "dev")));
 
