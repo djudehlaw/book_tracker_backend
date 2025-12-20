@@ -20,8 +20,8 @@ router.get("/book/:bookId", async (req, res) => {
   }
 });
 
-// сохранить прогресс
 router.post("/book/:bookId", async (req, res) => {
+  console.log("Запрос на /progress/book/:bookId", req.params.bookId, req.body);
   try {
     const { status, pages_read, total_pages } = req.body;
     const bookId = req.params.bookId;
@@ -48,9 +48,10 @@ router.post("/book/:bookId", async (req, res) => {
 
     res.json({ success: true });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false });
+    console.error("Ошибка при сохранении прогресса:", e);
+    res.status(500).json({ success: false, error: e.message });
   }
 });
+
 
 export default router;
