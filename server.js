@@ -1,6 +1,4 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -16,18 +14,11 @@ import ratingsRouter from "./routes/ratings.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// фикс __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json());
 
-// если это фронт
-app.use(express.static(path.join(__dirname, "dev")));
-
+// Тестовый маршрут
 app.get("/", (req, res) => {
   res.json({
     message: "📚 Book Tracker API работает",
@@ -38,9 +29,11 @@ app.get("/", (req, res) => {
   });
 });
 
+// Тест подключения к базе
 app.get("/api/test-db", async (req, res) => {
   try {
-    await testConnection();
+    const ok = await testConnection();
+    if (!ok) throw new Error();
 
     const [[books]] = await pool.query("SELECT COUNT(*) as c FROM books");
     const [[authors]] = await pool.query("SELECT COUNT(*) as c FROM authors");
@@ -52,13 +45,12 @@ app.get("/api/test-db", async (req, res) => {
         authors: authors.c,
       },
     });
-  } catch (e) {
-    console.error(e);
+  } catch {
     res.status(500).json({ success: false });
   }
 });
 
-// роуты
+// Роуты
 app.use("/books", booksRouter);
 app.use("/authors", authorsRouter);
 app.use("/progress", progressRouter);
@@ -66,11 +58,10 @@ app.use("/quotes", quotesRouter);
 app.use("/reviews", reviewsRouter);
 app.use("/ratings", ratingsRouter);
 
-// SPA fallback — В САМОМ КОНЦЕ
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dev", "index.html"));
+// fallback на 404 для всех остальных
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: "Маршрут не найден" });
 });
 
-app.listen(PORT, () =>
-  console.log(`Server started on port ${PORT}`)
-);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
