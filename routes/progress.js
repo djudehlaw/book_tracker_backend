@@ -1,9 +1,10 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // получить прогресс
-router.get('/book/:bookId', async (req, res) => {
+router.get("/book/:bookId", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT status, pages_read, total_pages
@@ -11,6 +12,7 @@ router.get('/book/:bookId', async (req, res) => {
        WHERE book_id = $1`,
       [req.params.bookId]
     );
+
     res.json({ success: true, data: rows[0] || null });
   } catch (e) {
     console.error(e);
@@ -19,12 +21,15 @@ router.get('/book/:bookId', async (req, res) => {
 });
 
 // сохранить прогресс
-router.post('/book/:bookId', async (req, res) => {
+router.post("/book/:bookId", async (req, res) => {
   try {
     const { status, pages_read, total_pages } = req.body;
     const bookId = req.params.bookId;
 
-    const { rowCount } = await pool.query('SELECT 1 FROM book_progress WHERE book_id = $1', [bookId]);
+    const { rowCount } = await pool.query(
+      "SELECT 1 FROM book_progress WHERE book_id = $1",
+      [bookId]
+    );
 
     if (rowCount) {
       await pool.query(
@@ -48,4 +53,4 @@ router.post('/book/:bookId', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

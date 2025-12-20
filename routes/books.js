@@ -1,11 +1,13 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // 🔍 ПОИСК КНИГ
-router.get('/search/:query', async (req, res) => {
+router.get("/search/:query", async (req, res) => {
   try {
     const q = `%${req.params.query}%`;
+
     const { rows } = await pool.query(
       `SELECT book_id AS id, title, publication_year, description
        FROM books
@@ -13,6 +15,7 @@ router.get('/search/:query', async (req, res) => {
        LIMIT 10`,
       [q]
     );
+
     res.json({ success: true, data: rows, count: rows.length });
   } catch (e) {
     console.error(e);
@@ -21,7 +24,7 @@ router.get('/search/:query', async (req, res) => {
 });
 
 // 📚 ВСЕ КНИГИ
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 20;
@@ -35,7 +38,9 @@ router.get('/', async (req, res) => {
          b.publication_year,
          b.description,
          b.cover_url,
-         COALESCE(STRING_AGG(a.first_name || ' ' || a.last_name, ','), '') AS authors
+         COALESCE(
+           STRING_AGG(a.first_name || ' ' || a.last_name, ','), ''
+         ) AS authors
        FROM books b
        LEFT JOIN book_authors ba ON b.book_id = ba.book_id
        LEFT JOIN authors a ON ba.author_id = a.author_id
@@ -46,12 +51,15 @@ router.get('/', async (req, res) => {
     );
 
     const { rows: countRows } = await pool.query(
-      'SELECT COUNT(*)::int AS total FROM books'
+      "SELECT COUNT(*)::int AS total FROM books"
     );
 
     res.json({
       success: true,
-      data: rows.map(b => ({ ...b, authors: b.authors ? b.authors.split(',') : [] })),
+      data: rows.map(b => ({
+        ...b,
+        authors: b.authors ? b.authors.split(",") : []
+      })),
       pagination: {
         total: countRows[0].total,
         page,
@@ -66,7 +74,7 @@ router.get('/', async (req, res) => {
 });
 
 // 📚 ОДНА КНИГА
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT 
@@ -84,13 +92,22 @@ router.get('/:id', async (req, res) => {
        GROUP BY b.book_id`,
       [req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ success: false });
 
-    res.json({ success: true, data: { ...rows[0], authors: rows[0].authors ? rows[0].authors.split(',') : [] } });
+    if (!rows.length) {
+      return res.status(404).json({ success: false });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...rows[0],
+        authors: rows[0].authors ? rows[0].authors.split(",") : []
+      }
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ success: false });
   }
 });
 
-module.exports = router;
+export default router;

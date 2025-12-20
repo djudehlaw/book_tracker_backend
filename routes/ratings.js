@@ -1,15 +1,17 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // все рейтинги
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT rating_id AS id, book_id, score
        FROM ratings
        ORDER BY rating_id DESC`
     );
+
     res.json({ success: true, data: rows });
   } catch (e) {
     console.error(e);
@@ -17,8 +19,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// рейтинги конкретной книги
-router.get('/book/:bookId', async (req, res) => {
+// рейтинги книги
+router.get("/book/:bookId", async (req, res) => {
   try {
     const { rows: ratings } = await pool.query(
       `SELECT rating_id AS id, book_id, score
@@ -47,10 +49,12 @@ router.get('/book/:bookId', async (req, res) => {
 });
 
 // добавить рейтинг
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { book_id, score } = req.body;
-    if (!book_id || score === undefined) return res.status(400).json({ success: false });
+    if (!book_id || score === undefined) {
+      return res.status(400).json({ success: false });
+    }
 
     await pool.query(
       `INSERT INTO ratings (book_id, score)
@@ -65,5 +69,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
-  
+export default router;

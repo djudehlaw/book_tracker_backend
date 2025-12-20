@@ -1,9 +1,10 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // получить цитаты книги
-router.get('/book/:bookId', async (req, res) => {
+router.get("/book/:bookId", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT quote_id AS id, text
@@ -11,6 +12,7 @@ router.get('/book/:bookId', async (req, res) => {
        WHERE book_id = $1`,
       [req.params.bookId]
     );
+
     res.json({ success: true, data: rows });
   } catch (e) {
     console.error(e);
@@ -19,10 +21,12 @@ router.get('/book/:bookId', async (req, res) => {
 });
 
 // добавить цитату
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { book_id, text } = req.body;
-    if (!book_id || !text) return res.status(400).json({ success: false });
+    if (!book_id || !text) {
+      return res.status(400).json({ success: false });
+    }
 
     await pool.query(
       `INSERT INTO quotes (book_id, text)
@@ -37,4 +41,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

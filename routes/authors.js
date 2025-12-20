@@ -1,11 +1,13 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // 🔍 ПОИСК АВТОРОВ
-router.get('/search/:query', async (req, res) => {
+router.get("/search/:query", async (req, res) => {
   try {
     const q = `%${req.params.query}%`;
+
     const { rows } = await pool.query(
       `SELECT 
          a.author_id AS id,
@@ -15,12 +17,15 @@ router.get('/search/:query', async (req, res) => {
          COUNT(DISTINCT ba.book_id) AS book_count
        FROM authors a
        LEFT JOIN book_authors ba ON a.author_id = ba.author_id
-       WHERE a.first_name ILIKE $1 OR a.last_name ILIKE $1 OR (a.first_name || ' ' || a.last_name) ILIKE $1
+       WHERE a.first_name ILIKE $1
+          OR a.last_name ILIKE $1
+          OR (a.first_name || ' ' || a.last_name) ILIKE $1
        GROUP BY a.author_id
        ORDER BY a.last_name
        LIMIT 20`,
       [q]
     );
+
     res.json({ success: true, data: rows, count: rows.length });
   } catch (e) {
     console.error(e);
@@ -29,7 +34,7 @@ router.get('/search/:query', async (req, res) => {
 });
 
 // 👨‍🎨 ВСЕ АВТОРЫ
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT 
@@ -44,6 +49,7 @@ router.get('/', async (req, res) => {
        GROUP BY a.author_id
        ORDER BY a.last_name`
     );
+
     res.json({ success: true, data: rows });
   } catch (e) {
     console.error(e);
@@ -52,7 +58,7 @@ router.get('/', async (req, res) => {
 });
 
 // 👨‍🎨 ОДИН АВТОР
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { rows: authorRows } = await pool.query(
       `SELECT 
@@ -65,7 +71,10 @@ router.get('/:id', async (req, res) => {
        WHERE author_id = $1`,
       [req.params.id]
     );
-    if (!authorRows.length) return res.status(404).json({ success: false });
+
+    if (!authorRows.length) {
+      return res.status(404).json({ success: false });
+    }
 
     const { rows: books } = await pool.query(
       `SELECT 
@@ -82,7 +91,11 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: { ...authorRows[0], books, total_books: books.length }
+      data: {
+        ...authorRows[0],
+        books,
+        total_books: books.length
+      }
     });
   } catch (e) {
     console.error(e);
@@ -90,4 +103,4 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

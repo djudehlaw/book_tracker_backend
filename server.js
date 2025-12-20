@@ -1,73 +1,76 @@
-const express = require('express');
+import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-const cors = require('cors');
-require('dotenv').config();
+import cors from "cors";
+import dotenv from "dotenv";
 
-const { pool, testConnection } = require('./config/database');
+import { pool, testConnection } from "./config/database.js";
 
-const booksRouter = require('./routes/books');
-const authorsRouter = require('./routes/authors');
-const progressRouter = require('./routes/progress');
-const quotesRouter = require('./routes/quotes');
-const reviewsRouter = require('./routes/reviews');
-const ratingsRouter = require('./routes/ratings');
+import booksRouter from "./routes/books.js";
+import authorsRouter from "./routes/authors.js";
+import progressRouter from "./routes/progress.js";
+import quotesRouter from "./routes/quotes.js";
+import reviewsRouter from "./routes/reviews.js";
+import ratingsRouter from "./routes/ratings.js";
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
+// фикс __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-app.use(express.static(path.join(__dirname, "dev")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dev", "index.html"));
-});
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
+// если это фронт
+app.use(express.static(path.join(__dirname, "dev")));
+
+app.get("/", (req, res) => {
   res.json({
-    message: '📚 Book Tracker API работает',
+    message: "📚 Book Tracker API работает",
     endpoints: {
-      books: '/api/books',
-      authors: '/api/authors'
-    }
+      books: "/books",
+      authors: "/authors",
+    },
   });
 });
 
-app.get('/api/test-db', async (req, res) => {
+app.get("/api/test-db", async (req, res) => {
   try {
-    const ok = await testConnection();
-    if (!ok) throw new Error();
+    await testConnection();
 
-    const [[books]] = await pool.query('SELECT COUNT(*) as c FROM books');
-    const [[authors]] = await pool.query('SELECT COUNT(*) as c FROM authors');
+    const [[books]] = await pool.query("SELECT COUNT(*) as c FROM books");
+    const [[authors]] = await pool.query("SELECT COUNT(*) as c FROM authors");
 
     res.json({
       success: true,
       stats: {
         books: books.c,
-        authors: authors.c
-      }
+        authors: authors.c,
+      },
     });
-  } catch {
+  } catch (e) {
+    console.error(e);
     res.status(500).json({ success: false });
   }
 });
 
-app.use('/books', booksRouter);
-app.use('/authors', authorsRouter);
-app.use('/progress', progressRouter);
-app.use('/quotes', quotesRouter);
-app.use('/reviews', reviewsRouter);
-app.use('/ratings', ratingsRouter);
+// роуты
+app.use("/books", booksRouter);
+app.use("/authors", authorsRouter);
+app.use("/progress", progressRouter);
+app.use("/quotes", quotesRouter);
+app.use("/reviews", reviewsRouter);
+app.use("/ratings", ratingsRouter);
 
-// fallback
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'Маршрут не найден' });
+// SPA fallback — В САМОМ КОНЦЕ
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dev", "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server started on port ${PORT}`)
+);

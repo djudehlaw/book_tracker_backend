@@ -1,15 +1,17 @@
-const express = require('express');
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const pool = require('../config/database');
 
 // все отзывы
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT review_id AS id, book_id, text, created_at
        FROM reviews
        ORDER BY created_at DESC`
     );
+
     res.json({ success: true, data: rows });
   } catch (e) {
     console.error(e);
@@ -17,8 +19,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// отзывы конкретной книги
-router.get('/book/:bookId', async (req, res) => {
+// отзывы книги
+router.get("/book/:bookId", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT review_id AS id, book_id, text, created_at
@@ -27,6 +29,7 @@ router.get('/book/:bookId', async (req, res) => {
        ORDER BY created_at DESC`,
       [req.params.bookId]
     );
+
     res.json({ success: true, data: rows });
   } catch (e) {
     console.error(e);
@@ -35,10 +38,12 @@ router.get('/book/:bookId', async (req, res) => {
 });
 
 // добавить отзыв
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { book_id, text } = req.body;
-    if (!book_id || !text) return res.status(400).json({ success: false });
+    if (!book_id || !text) {
+      return res.status(400).json({ success: false });
+    }
 
     await pool.query(
       `INSERT INTO reviews (book_id, text)
@@ -53,4 +58,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

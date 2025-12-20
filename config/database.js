@@ -1,12 +1,20 @@
-const { Pool } = require('pg');
+import pg from "pg";
+const { Pool } = pg;
 
 const pool = new Pool({
-  host: 'dpg-d527opre5dus73eeubl0-a.oregon-postgres.render.com',
-  port: 5432,
-  user: 'book_tracker_t5co_user',
-  password: 'JIF1tPVHGWIRknL24Z7hkll5jfcsT354',
-  database: 'book_tracker_t5co',
-  ssl: { rejectUnauthorized: false } // важно для Render
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-module.exports = pool;
+export async function testConnection() {
+  try {
+    const client = await pool.connect();
+    client.release();
+    return true;
+  } catch (e) {
+    console.error("DB connection failed:", e);
+    throw e;
+  }
+}
+
+export { pool };
