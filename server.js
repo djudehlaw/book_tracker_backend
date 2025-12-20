@@ -12,8 +12,9 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: "https://book-tracker-6puf.onrender.com" // фронт
+  origin: "https://book-tracker-6puf.onrendeer.com" // фронт
 }));
+
 app.use(express.json());
 
 // API
