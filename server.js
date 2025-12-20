@@ -1,4 +1,5 @@
 const express = require('express');
+import path from "path";
 const cors = require('cors');
 require('dotenv').config();
 
@@ -12,6 +13,12 @@ const reviewsRouter = require('./routes/reviews');
 const ratingsRouter = require('./routes/ratings');
 
 const app = express();
+
+app.use(express.static(path.join(__dirname, "dev")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dev", "index.html"));
+});
 
 app.use(cors());
 app.use(express.json());
