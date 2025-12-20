@@ -17,6 +17,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "frontend/dist")));
 
 // Тестовый маршрут
 app.get("/", (req, res) => {
@@ -59,9 +60,9 @@ app.use("/reviews", reviewsRouter);
 app.use("/ratings", ratingsRouter);
 
 // fallback на 404 для всех остальных
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: "Маршрут не найден" });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend/dist", "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
