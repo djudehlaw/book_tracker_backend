@@ -118,7 +118,7 @@ router.post("/", async (req, res) => {
 
   // Проверка автора и добавление книги
   let authorRes = await client.query(
-    `SELECT id FROM authors WHERE first_name=$1 AND last_name=$2`,
+    `SELECT author_id FROM authors WHERE first_name=$1 AND last_name=$2`,
     [author_first_name, author_last_name]
   );
 
