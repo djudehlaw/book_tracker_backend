@@ -127,7 +127,7 @@ router.post("/", async (req, res) => {
     author_id = authorRes.rows[0].id;
   } else {
     const newAuthor = await client.query(
-      `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING id`,
+      `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING author_id`,
       [author_first_name, author_last_name, author_birth_date || null]
     );
     author_id = newAuthor.rows[0].id;
@@ -135,7 +135,7 @@ router.post("/", async (req, res) => {
 
   const newBook = await client.query(
     `INSERT INTO books (title, isbn, publication_year, description, cover_url)
-     VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+     VALUES ($1,$2,$3,$4,$5) RETURNING book_id`,
     [title, isbn, publication_year || null, description, cover_url || null]
   );
   const book_id = newBook.rows[0].id;
