@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT review_id AS id, book_id, text, created_at
+      `SELECT review_id AS id, book_id, text
        FROM reviews
        ORDER BY created_at DESC`
     );
@@ -23,7 +23,7 @@ router.get("/", async (req, res) => {
 router.get("/book/:bookId", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT review_id AS id, book_id, text, created_at
+      `SELECT review_id AS id, book_id, text
        FROM reviews
        WHERE book_id = $1
        ORDER BY created_at DESC`,
