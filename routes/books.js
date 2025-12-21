@@ -110,7 +110,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/api/books", async (req, res) => {
+router.post("/", async (req, res) => {
   const { title, isbn, publication_year, description, cover_url, author_first_name, author_last_name, author_birth_date } = req.body;
   const client = await pool.connect();
   try {
