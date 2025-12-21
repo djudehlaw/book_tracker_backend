@@ -114,49 +114,49 @@ router.post("/books", async (req, res) => {
   const { title, isbn, publication_year, description, cover_url, author_first_name, author_last_name, author_birth_date } = req.body;
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+  await client.query('BEGIN');
 
-    // 1️⃣ Проверяем, есть ли автор
-    let authorRes = await client.query(
-      `SELECT id FROM authors WHERE first_name=$1 AND last_name=$2`,
-      [author_first_name, author_last_name]
+  // Проверка автора и добавление книги
+  let authorRes = await client.query(
+    `SELECT id FROM authors WHERE first_name=$1 AND last_name=$2`,
+    [author_first_name, author_last_name]
+  );
+
+  let author_id;
+  if (authorRes.rows.length > 0) {
+    author_id = authorRes.rows[0].id;
+  } else {
+    const newAuthor = await client.query(
+      `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING id`,
+      [author_first_name, author_last_name, author_birth_date || null]
     );
-
-    let author_id;
-    if (authorRes.rows.length > 0) {
-      author_id = authorRes.rows[0].id; // автор уже есть
-    } else {
-      // добавляем автора
-      const newAuthor = await client.query(
-        `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING id`,
-        [author_first_name, author_last_name, author_birth_date || null]
-      );
-      author_id = newAuthor.rows[0].id;
-    }
-
-    // 2️⃣ Добавляем книгу
-    const newBook = await client.query(
-      `INSERT INTO books (title, isbn, publication_year, description, cover_url)
-       VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-      [title, isbn, publication_year || null, description, cover_url || null]
-    );
-    const book_id = newBook.rows[0].id;
-
-    // 3️⃣ Добавляем связь в book_authors
-    await client.query(
-      `INSERT INTO book_authors (book_id, author_id) VALUES ($1,$2)`,
-      [book_id, author_id]
-    );
-
-    await client.query("COMMIT");
-    res.status(201).json({ book_id });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ error: "Ошибка при добавлении книги" });
-  } finally {
-    client.release();
+    author_id = newAuthor.rows[0].id;
   }
+
+  const newBook = await client.query(
+    `INSERT INTO books (title, isbn, publication_year, description, cover_url)
+     VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+    [title, isbn, publication_year || null, description, cover_url || null]
+  );
+  const book_id = newBook.rows[0].id;
+
+  await client.query(
+    `INSERT INTO book_authors (book_id, author_id) VALUES ($1,$2)`,
+    [book_id, author_id]
+  );
+
+  await client.query('COMMIT');
+
+  // ✅ Отправляем JSON ответ
+  res.status(201).json({ book_id });
+
+} catch (err) {
+  await client.query('ROLLBACK');
+  console.error(err);
+  res.status(500).json({ error: 'Ошибка при добавлении книги' });
+} finally {
+  client.release(); // release только после res.json
+}
 });
 
 export default router;
