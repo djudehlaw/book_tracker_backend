@@ -8,8 +8,7 @@ router.get("/", async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT review_id AS id, book_id, text
-       FROM reviews
-       ORDER BY created_at DESC`
+       FROM reviews`
     );
 
     res.json({ success: true, data: rows });
@@ -25,8 +24,7 @@ router.get("/book/:bookId", async (req, res) => {
     const { rows } = await pool.query(
       `SELECT review_id AS id, book_id, text
        FROM reviews
-       WHERE book_id = $1
-       ORDER BY created_at DESC`,
+       WHERE book_id = $1`,
       [req.params.bookId]
     );
 
