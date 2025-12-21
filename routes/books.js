@@ -122,23 +122,24 @@ router.post("/", async (req, res) => {
     [author_first_name, author_last_name]
   );
 
-  let author_id;
-  if (authorRes.rows.length > 0) {
-    author_id = authorRes.rows[0].id;
-  } else {
-    const newAuthor = await client.query(
-      `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING author_id`,
-      [author_first_name, author_last_name, author_birth_date || null]
-    );
-    author_id = newAuthor.rows[0].id;
-  }
-
-  const newBook = await client.query(
-    `INSERT INTO books (title, isbn, publication_year, description, cover_url)
-     VALUES ($1,$2,$3,$4,$5) RETURNING book_id`,
-    [title, isbn, publication_year || null, description, cover_url || null]
+let author_id;
+if (authorRes.rows.length > 0) {
+  author_id = authorRes.rows[0].author_id; // <-- было .id, а надо .author_id
+} else {
+  const newAuthor = await client.query(
+    `INSERT INTO authors (first_name, last_name, birth_date) VALUES ($1,$2,$3) RETURNING author_id`,
+    [author_first_name, author_last_name, author_birth_date || null]
   );
-  const book_id = newBook.rows[0].id;
+  author_id = newAuthor.rows[0].author_id; // <-- тоже .author_id
+}
+
+const newBook = await client.query(
+  `INSERT INTO books (title, isbn, publication_year, description, cover_url)
+   VALUES ($1,$2,$3,$4,$5) RETURNING book_id`,
+  [title, isbn, publication_year || null, description, cover_url || null]
+);
+const book_id = newBook.rows[0].book_id; // <-- .book_id
+
 
   await client.query(
     `INSERT INTO book_authors (book_id, author_id) VALUES ($1,$2)`,
